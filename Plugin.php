@@ -4,8 +4,8 @@
  *
  * @package UpyunFile
  * @author codesee
- * @version 0.9.0
- * @link http://pengzhiyong.com
+ * @version 1.0.0
+ * @link https://blog.sspirits.top
  * @dependence 1.0-*
  * @date 2019-1-20
  */
@@ -87,7 +87,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         $form->addInput($upyunpwd->addRule('required', _t('您必须填写密码，它是由 Upyun 提供'))
             ->addRule(array('UpyunFile_Plugin', 'validate'), _t('验证不通过，请核对 Upyun 操作员和密码是否输入正确')));
 
-        $convertPic = new Typecho_Widget_Helper_Form_Element_Radio('convertPic', array('1' => _t('开启'), '0' => _t('关闭')), '0', _t('又拍云图片处理'), _t('启用本功能需在又拍云控制台中创建缩略图版本，又拍云文档：<a href="https://help.upyun.com/knowledge-base/image/#thumb">https://help.upyun.com/knowledge-base/image/#thumb</a>'));
+        $convertPic = new Typecho_Widget_Helper_Form_Element_Radio('convertPic', array('1' => _t('开启'), '0' => _t('关闭')), '0', _t('又拍云图片处理'), _t('启用本功能需在又拍云控制台中创建缩略图版本，又拍云文档：<a href="https://help.upyun.com/knowledge-base/image/#thumb">https://help.upyun.com/knowledge-base/image/#thumb</a><br>本功能不会处理带有后缀 <b>_nothumb</b> 的图片（比如：example_nothumb.png）'));
         $form->addInput($convertPic);
 
         $thumbId = new Typecho_Widget_Helper_Form_Element_Text('thumbId', NULL, NULL, _t('图片处理 - 缩略图版本名称：'), _t('启用又拍云图片处理必须正确填写缩略图版本名称'));
@@ -101,7 +101,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         $addToken = new Typecho_Widget_Helper_Form_Element_Radio('addToken', array('1' => _t('开启'), '0' => _t('关闭')), '0', _t('又拍云 Token 防盗链'), _t('启用本功能需在又拍云控制台中启用 Token 防盗链'));
         $form->addInput($addToken);
 
-        $secret = new Typecho_Widget_Helper_Form_Element_Text('secret', NULL, NULL, _t('密钥'), _t('启用又拍云 Token 防盗链必须正确填写又拍云控制台中设置的密钥'));
+        $secret = new Typecho_Widget_Helper_Form_Element_Password('secret', NULL, NULL, _t('密钥'), _t('启用又拍云 Token 防盗链必须正确填写又拍云控制台中设置的密钥'));
         $form->addInput($secret);
 
         $etime = new Typecho_Widget_Helper_Form_Element_Text('etime', NULL, NULL, _t('签名过期时间'), _t('单位为秒'));
@@ -152,8 +152,9 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
             $path = self::getUploadDir() . $path;
         }
 
+        $nothumb = strpos($file['name'], '_nothumb') !== false;
         //获取文件名及文件路径
-        if (!empty($settings->convertPic) && !empty($settings->outputFormat)) {
+        if (!$nothumb && !empty($settings->convertPic) && !empty($settings->outputFormat)) {
             foreach (self::IMG_EXT as $item) {
                 if (strcasecmp($ext, $item) == 0) {
                     $ext = $settings->outputFormat;
@@ -173,7 +174,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
             //上传文件
             $upyun = self::upyunInit();
             $fh = fopen($uploadfile, 'rb');
-            if (empty($thumbId)) {
+            if ($nothumb || empty($thumbId)) {
                 $upyun->write($path, $fh);
             } else {
                 $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
@@ -188,7 +189,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
 
         //返回相对存储路径
         return array(
-            'name' => empty($settings->outputFormat) ? $file['name'] : substr($file['name'], 0, strrpos($file['name'], '.') + 1) . $ext,
+            'name' => $nothumb || empty($settings->outputFormat) ? $file['name'] : substr($file['name'], 0, strrpos($file['name'], '.') + 1) . $ext,
             'path' => $path,
             'size' => $file['size'],
             'type' => $ext,
@@ -229,7 +230,8 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
             $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
             $upyun = self::upyunInit();
             $thumbId = '';
-            if (!empty($settings->convertPic) && !empty($settings->outputFormat)) {
+            $nothumb = strpos($file['name'], '_nothumb') !== false;
+            if (!$nothumb && !empty($settings->convertPic) && !empty($settings->outputFormat)) {
                 foreach (self::IMG_EXT as $item) {
                     if (strcasecmp($ext, $item) == 0) {
                         $thumbId = $settings->thumbId;
@@ -238,7 +240,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
                 }
             }
             $fh = fopen($uploadfile, 'rb');
-            if (empty($thumbId)) {
+            if ($nothumb && empty($thumbId)) {
                 $upyun->write($path, $fh);
             } else {
                 $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
@@ -285,8 +287,13 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      */
     public static function attachmentHandle(array $content)
     {
-        $domain = Helper::options()->plugin('UpyunFile')->upyundomain;
-        return Typecho_Common::url($content['attachment']->path, $domain);
+        $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
+        $domain = $settings->upyundomain;
+        $url = Typecho_Common::url($content['attachment']->path, $domain);
+        if ($settings->addToken != 1) return $url;
+        $etime = time() + $settings->etime;
+        $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($url, PHP_URL_PATH)), 12, 8) . $etime;
+        return $url . "?_upt=" . $sign;
     }
 
     /**
@@ -786,18 +793,17 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         if ($settings->addToken == 1) {
             preg_match_all('/https?:\/\/[-A-Za-z0-9+&@#\/\%?=~_|!:,.;]+[-A-Za-z0-9+&@#\/\%=~_|]/i', $text, $matches);
             if ($matches) {
+                $etime = time() + $settings->etime;
                 foreach (array_unique($matches[0]) as $val) {
                     if (strpos($val, $settings->upyundomain) !== false) {
-                        if (isset($_COOKIE["upyun_token_etime"]) && $_COOKIE["upyun_token_etime"] - time() > 180) {
-                            $etime = $_COOKIE["upyun_token_etime"];
+                        $query = parse_url($val, PHP_URL_QUERY);
+                        if (!empty($query)) {
+                            if (strpos($query, '_upt') == false) {
+                                $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($val, PHP_URL_PATH)), 12, 8) . $etime;
+                                $text = str_replace($val, $val . "&_upt=" . $sign, $text);
+                            }
                         } else {
-                            $etime = time() + $settings->etime;
-                            setcookie("upyun_token_etime", $etime);
-                        }
-                        $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($val, PHP_URL_PATH)), 12, 8) . $etime;
-                        if (parse_url($val, PHP_URL_QUERY) != null) {
-                            $text = str_replace($val, $val . "&_upt=" . $sign, $text);
-                        } else {
+                            $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($val, PHP_URL_PATH)), 12, 8) . $etime;
                             $text = str_replace($val, $val . "?_upt=" . $sign, $text);
                         }
                     }
