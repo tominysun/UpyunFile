@@ -35,7 +35,11 @@ UpyunFile
 - 控制台的文件管理中现在可以正常查看有 Token 防盗链保护的图片
 - 又拍云图片处理会忽略带有后缀 `_nothumb` 的图片（比如：example_nothumb.png）
 - 优化代码
-  
+
+**2019-2-23：** 
+
+- 修复某些情况下重复添加 Token 的 bug
+  
 #### 鸣谢：
  原作者：[codesee](https://github.com/codesee)
  
