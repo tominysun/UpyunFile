@@ -4,7 +4,7 @@
  *
  * @package UpyunFile
  * @author codesee
- * @version 1.0.0
+ * @version 1.0.2
  * @link https://blog.sspirits.top
  * @dependence 1.0-*
  * @date 2019-1-20
@@ -293,7 +293,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         if ($settings->addToken != 1) return $url;
         $etime = time() + $settings->etime;
         $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($url, PHP_URL_PATH)), 12, 8) . $etime;
-        return $url . "?_upt=" . $sign;
+        return self::addParameter($url, '_upt', $sign);
     }
 
     /**
@@ -787,28 +787,39 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         ob_start('UpyunFile_Plugin::beforeRender');
     }
 
+    public static function addParameter($url, $key, $val)
+    {
+        $query = parse_url($url, PHP_URL_QUERY);
+        if (!empty($query)) {
+            if (strpos($query, $key) === false) {
+                $url .= "&$key=$val";
+            }else{
+                $url = substr($url, 0, -1 * strlen($query));
+                $url .= preg_replace("/(.+?)=([^&?]*)/", "$key=$val", $query);
+            }
+        } else {
+            $url .= "?$key=$val";
+        }
+        return $url;
+    }
+
     public static function beforeRender($text)
     {
         $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
         if ($settings->addToken == 1) {
-            preg_match_all('/https?:\/\/[-A-Za-z0-9+&@#\/\%?=~_|!:,.;]+[-A-Za-z0-9+&@#\/\%=~_|]/i', $text, $matches);
-            if ($matches) {
-                $etime = time() + $settings->etime;
-                foreach (array_unique($matches[0]) as $val) {
-                    if (strpos($val, $settings->upyundomain) !== false) {
-                        $query = parse_url($val, PHP_URL_QUERY);
-                        if (!empty($query)) {
-                            if (strpos($query, '_upt') == false) {
-                                $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($val, PHP_URL_PATH)), 12, 8) . $etime;
-                                $text = str_replace($val, $val . "&_upt=" . $sign, $text);
-                            }
-                        } else {
-                            $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($val, PHP_URL_PATH)), 12, 8) . $etime;
-                            $text = str_replace($val, $val . "?_upt=" . $sign, $text);
-                        }
+            return preg_replace_callback(
+                '/https?:\/\/[-A-Za-z0-9+&@#\/\%?=~_|!:,.;]+[-A-Za-z0-9+&@#\/\%=~_|]/i',
+                function ($matches) use ($settings) {
+                    $etime = time() + $settings->etime;
+                    $url = $matches[0];
+                    if (strpos($url, $settings->upyundomain) !== false) {
+                        $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($url, PHP_URL_PATH)), 12, 8) . $etime;
+                        $url = self::addParameter($url, '_upt', $sign);
                     }
-                }
-            }
+                    return $url;
+                },
+                $text
+            );
         }
         return $text;
     }
