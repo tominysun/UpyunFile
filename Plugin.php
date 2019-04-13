@@ -4,20 +4,20 @@
  *
  * @package UpyunFile
  * @author codesee
- * @version 1.0.2
+ * @version 1.0.3
  * @link https://blog.sspirits.top
  * @dependence 1.0-*
  * @date 2019-1-20
  */
 
-use Upyun\Upyun;
 use Upyun\Config;
+use Upyun\Upyun;
 
-class UpyunFile_Plugin implements Typecho_Plugin_Interface
-{
+class UpyunFile_Plugin implements Typecho_Plugin_Interface {
+
     //上传文件目录
     const UPLOAD_DIR = '/typecho/uploads';
-    const IMG_EXT = array('JPG', 'JPEG', 'PNG', 'BMP');
+    const IMG_EXT = ['JPG', 'JPEG', 'PNG', 'BMP'];
 
     /**
      * 激活插件方法,如果激活失败,直接抛出异常
@@ -26,8 +26,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @return void
      * @throws Typecho_Plugin_Exception
      */
-    public static function activate()
-    {
+    public static function activate() {
         Typecho_Plugin::factory('Widget_Upload')->uploadHandle = array('UpyunFile_Plugin', 'uploadHandle');
         Typecho_Plugin::factory('Widget_Upload')->modifyHandle = array('UpyunFile_Plugin', 'modifyHandle');
         Typecho_Plugin::factory('Widget_Upload')->deleteHandle = array('UpyunFile_Plugin', 'deleteHandle');
@@ -46,8 +45,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @return void
      * @throws Typecho_Plugin_Exception
      */
-    public static function deactivate()
-    {
+    public static function deactivate() {
         return _t('插件已被禁用');
     }
 
@@ -58,8 +56,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param Typecho_Widget_Helper_Form $form 配置面板
      * @return void
      */
-    public static function config(Typecho_Widget_Helper_Form $form)
-    {
+    public static function config(Typecho_Widget_Helper_Form $form) {
         $convert = new Typecho_Widget_Helper_Form_Element_Radio('convert', array('1' => _t('开启'), '0' => _t('关闭')), '0', _t('图片链接修改'), _t('把文章中图片的链接修改为又拍云 CDN 链接，启用前请把放在 typecho 上传目录中的图片同步到又拍云中'));
         $form->addInput($convert);
         $upyundomain = new Typecho_Widget_Helper_Form_Element_Text('upyundomain', NULL, 'https://', _t('绑定域名：'), _t('该绑定域名为绑定Upyun服务的域名，由Upyun提供，注意以 http(s):// 开头，最后不要加 /'));
@@ -116,8 +113,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param Typecho_Widget_Helper_Form $form
      * @return void
      */
-    public static function personalConfig(Typecho_Widget_Helper_Form $form)
-    {
+    public static function personalConfig(Typecho_Widget_Helper_Form $form) {
     }
 
     /**
@@ -127,8 +123,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param array $file 上传的文件
      * @return mixed
      */
-    public static function uploadHandle($file)
-    {
+    public static function uploadHandle($file) {
         if (empty($file['name'])) {
             return false;
         }
@@ -148,7 +143,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         $path = '/' . $date->year . '/' . $date->month;
         $settings = $options->plugin('UpyunFile');
         $thumbId = '';
-        if ($settings->mode == 'typecho') {
+        if ($settings->mode === 'typecho') {
             $path = self::getUploadDir() . $path;
         }
 
@@ -170,17 +165,17 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
 
         if (!isset($uploadfile)) {
             return false;
-        } else {
-            //上传文件
-            $upyun = self::upyunInit();
-            $fh = fopen($uploadfile, 'rb');
-            if ($nothumb || empty($thumbId)) {
-                $upyun->write($path, $fh);
-            } else {
-                $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
-            }
-            fclose($fh);
         }
+
+        //上传文件
+        $upyun = self::upyunInit();
+        $fh = fopen($uploadfile, 'rb');
+        if ($nothumb || empty($thumbId)) {
+            $upyun->write($path, $fh);
+        } else {
+            $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
+        }
+        fclose($fh);
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
@@ -205,8 +200,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param array $file 新上传的文件
      * @return mixed
      */
-    public static function modifyHandle($content, $file)
-    {
+    public static function modifyHandle($content, $file) {
         if (empty($file['name'])) {
             return false;
         }
@@ -214,7 +208,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         //获取扩展名
         $ext = self::getSafeName($file['name']);
 
-        if ($content['attachment']->type != $ext || Typecho_Common::isAppEngine()) {
+        if ($content['attachment']->type !== $ext || Typecho_Common::isAppEngine()) {
             return false;
         }
 
@@ -225,28 +219,27 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
 
         if (!isset($uploadfile)) {
             return false;
-        } else {
-            //修改文件
-            $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
-            $upyun = self::upyunInit();
-            $thumbId = '';
-            $nothumb = strpos($file['name'], '_nothumb') !== false;
-            if (!$nothumb && !empty($settings->convertPic) && !empty($settings->outputFormat)) {
-                foreach (self::IMG_EXT as $item) {
-                    if (strcasecmp($ext, $item) == 0) {
-                        $thumbId = $settings->thumbId;
-                        break;
-                    }
+        }
+        //修改文件
+        $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
+        $upyun = self::upyunInit();
+        $thumbId = '';
+        $nothumb = strpos($file['name'], '_nothumb') !== false;
+        if (!$nothumb && !empty($settings->convertPic) && !empty($settings->outputFormat)) {
+            foreach (self::IMG_EXT as $item) {
+                if (strcasecmp($ext, $item) == 0) {
+                    $thumbId = $settings->thumbId;
+                    break;
                 }
             }
-            $fh = fopen($uploadfile, 'rb');
-            if ($nothumb && empty($thumbId)) {
-                $upyun->write($path, $fh);
-            } else {
-                $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
-            }
-            fclose($fh);
         }
+        $fh = fopen($uploadfile, 'rb');
+        if ($nothumb && empty($thumbId)) {
+            $upyun->write($path, $fh);
+        } else {
+            $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
+        }
+        fclose($fh);
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
@@ -270,8 +263,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param array $content 文件相关信息
      * @return string
      */
-    public static function deleteHandle(array $content)
-    {
+    public static function deleteHandle(array $content) {
         $upyun = self::upyunInit();
         $path = $content['attachment']->path;
 
@@ -285,13 +277,14 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param array $content 文件相关信息
      * @return string
      */
-    public static function attachmentHandle(array $content)
-    {
+    public static function attachmentHandle(array $content) {
         $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
         $domain = $settings->upyundomain;
         $url = Typecho_Common::url($content['attachment']->path, $domain);
-        if ($settings->addToken != 1) return $url;
-        $etime = time() + $settings->etime;
+        if ($settings->addToken != 1) {
+            return $url;
+        }
+        $etime = self::getEtime($settings->etime);
         $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($url, PHP_URL_PATH)), 12, 8) . $etime;
         return self::addParameter($url, '_upt', $sign);
     }
@@ -303,8 +296,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param array $content
      * @return string
      */
-    public static function attachmentDataHandle(array $content)
-    {
+    public static function attachmentDataHandle(array $content) {
         $upyun = self::upyunInit();
         return $upyun->info($content['attachment']->path);
     }
@@ -316,13 +308,10 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      *
      * @return boolean
      */
-    public static function validate()
-    {
+    public static function validate() {
         $host = Typecho_Request::getInstance()->upyunhost;
         $user = Typecho_Request::getInstance()->upyunuser;
         $pwd = Typecho_Request::getInstance()->upyunpwd;
-
-        $hostUsage = 0;
 
         try {
             require_once 'Upyun/vendor/autoload.php';
@@ -342,8 +331,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access public
      * @return object
      */
-    public static function upyunInit()
-    {
+    public static function upyunInit() {
         $options = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
         require_once 'Upyun/vendor/autoload.php';
         $serviceConfig = new Config($options->upyunhost, $options->upyunuser, $options->upyunpwd);
@@ -357,8 +345,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access private
      * @return string
      */
-    private static function getUploadFile($file)
-    {
+    private static function getUploadFile($file) {
         return isset($file['tmp_name']) ? $file['tmp_name'] : (isset($file['bytes']) ? $file['bytes'] : (isset($file['bits']) ? $file['bits'] : ''));
     }
 
@@ -370,10 +357,8 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access private
      * @return string
      */
-    private static function getSafeName(&$name)
-    {
-        $name = str_replace(array('"', '<', '>'), '', $name);
-        $name = str_replace('\\', '/', $name);
+    private static function getSafeName(&$name) {
+        $name = str_replace(array('\\', '"', '<', '>'), '/', $name);
         $name = false === strpos($name, '/') ? ('a' . $name) : str_replace('/', '/a', $name);
         $info = pathinfo($name);
         $name = substr($info['basename'], 1);
@@ -386,13 +371,11 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access private
      * @return string
      */
-    private static function getUploadDir()
-    {
+    private static function getUploadDir() {
         if (defined('__TYPECHO_UPLOAD_DIR__')) {
             return __TYPECHO_UPLOAD_DIR__;
-        } else {
-            return self::UPLOAD_DIR;
         }
+        return self::UPLOAD_DIR;
     }
 
     /**
@@ -400,8 +383,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access private
      * @return string
      */
-    private static function mimeContentType($fileName)
-    {
+    private static function mimeContentType($fileName) {
         //TODO:避免该方法
         //避免Typecho mime-content-type引发的异常
         /*异常详情：
@@ -412,9 +394,8 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
 
         if (!$mime) {
             return self::getMime($fileName);
-        } else {
-            return $mime;
         }
+        return $mime;
     }
 
     /**
@@ -422,8 +403,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @access private
      * @return string
      */
-    private static function getMime($fileName)
-    {
+    private static function getMime($fileName) {
         $mimeTypes = array(
             'ez' => 'application/andrew-inset',
             'csm' => 'application/cu-seeme',
@@ -758,8 +738,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
      * @param $class
      * @return $content
      */
-    public static function replace($text, $widget, $lastResult)
-    {
+    public static function replace($text, $widget, $lastResult) {
         $text = empty($lastResult) ? $text : $lastResult;
         $options = Typecho_Widget::widget('Widget_Options');
         $settings = $options->plugin('UpyunFile');
@@ -782,20 +761,18 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         return $text;
     }
 
-    public static function Widget_Archive_beforeRender()
-    {
+    public static function Widget_Archive_beforeRender() {
         ob_start('UpyunFile_Plugin::beforeRender');
     }
 
-    public static function addParameter($url, $key, $val)
-    {
+    public static function addParameter($url, $key, $val) {
         $query = parse_url($url, PHP_URL_QUERY);
         if (!empty($query)) {
             if (strpos($query, $key) === false) {
                 $url .= "&$key=$val";
-            }else{
+            } else {
                 $url = substr($url, 0, -1 * strlen($query));
-                $url .= preg_replace("/(.+?)=([^&?]*)/", "$key=$val", $query);
+                $url .= preg_replace('/(.+?)=([^&?]*)/', "$key=$val", $query);
             }
         } else {
             $url .= "?$key=$val";
@@ -803,14 +780,26 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface
         return $url;
     }
 
-    public static function beforeRender($text)
-    {
+    public static function getEtime($timeout) {
+        static $isFirst = true;
+        if (isset($_COOKIE["upyun_token_etime"]) && $_COOKIE["upyun_token_etime"] - time() > 120) {
+            return $etime = $_COOKIE["upyun_token_etime"];
+        }
+        $etime = time() + $timeout;
+        if ($isFirst) {
+            setcookie("upyun_token_etime", $etime);
+            $isFirst = false;
+        }
+        return $etime;
+    }
+
+    public static function beforeRender($text) {
         $settings = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile');
         if ($settings->addToken == 1) {
             return preg_replace_callback(
                 '/https?:\/\/[-A-Za-z0-9+&@#\/\%?=~_|!:,.;]+[-A-Za-z0-9+&@#\/\%=~_|]/i',
                 function ($matches) use ($settings) {
-                    $etime = time() + $settings->etime;
+                    $etime = self::getEtime($settings->etime);
                     $url = $matches[0];
                     if (strpos($url, $settings->upyundomain) !== false) {
                         $sign = substr(md5($settings->secret . '&' . $etime . '&' . parse_url($url, PHP_URL_PATH)), 12, 8) . $etime;
