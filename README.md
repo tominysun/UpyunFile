@@ -39,6 +39,11 @@ UpyunFile
 **2019-2-23：** 
 
 - 修复某些情况下重复添加 Token 的 bug
+
+**2019-4-13：** 
+
+- 优化代码
+- 增强兼容性
   
 #### 鸣谢：
  原作者：[codesee](https://github.com/codesee)
