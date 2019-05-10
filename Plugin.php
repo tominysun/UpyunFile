@@ -4,10 +4,10 @@
  *
  * @package UpyunFile
  * @author codesee
- * @version 1.0.3
+ * @version 1.0.4
  * @link https://blog.sspirits.top
  * @dependence 1.0-*
- * @date 2019-1-20
+ * @date 2019-5-10
  */
 
 use Upyun\Config;
@@ -175,7 +175,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
         } else {
             $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
         }
-        fclose($fh);
+        @fclose($fh);
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
@@ -239,7 +239,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
         } else {
             $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
         }
-        fclose($fh);
+        @fclose($fh);
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
