@@ -21,7 +21,7 @@ UpyunFile
 
   1. 在 [Release](https://github.com/ShadowySpirits/UpyunFile/releases) 中下载此插件的最新版，上传至网站的/usr/plugins/目录下；
   2. 启用该插件，正确填写相关信息，保存即可。
-  3. 详细使用以及其他技巧见此文：https://blog.sspirits.top/archives/new-version-of-UpyunFile-plugin-use-tutorial
+  3. 详细使用以及其他技巧见此文：https://blog.lv5.moe/p/new-version-of-upyunfile-plugin-use-tutorial
 
 
 #### 更新记录：
