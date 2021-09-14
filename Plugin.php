@@ -4,10 +4,10 @@
  *
  * @package UpyunFile
  * @author codesee
- * @version 1.0.4
+ * @version 1.0.5
  * @link https://blog.sspirits.top
- * @dependence 1.0-*
- * @date 2019-5-10
+ * @since 1.2.0
+ * @date 2021-09-14
  */
 
 use Upyun\Config;
@@ -309,9 +309,9 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
      * @return boolean
      */
     public static function validate() {
-        $host = Typecho_Request::getInstance()->upyunhost;
-        $user = Typecho_Request::getInstance()->upyunuser;
-        $pwd = Typecho_Request::getInstance()->upyunpwd;
+        $host = Typecho_Request::getInstance()->get("upyunhost");
+        $user = Typecho_Request::getInstance()->get("upyunuser");
+        $pwd = Typecho_Request::getInstance()->get("upyunpwd");
 
         try {
             require_once 'Upyun/vendor/autoload.php';
