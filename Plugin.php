@@ -1,11 +1,11 @@
 <?php
 /**
- * 又拍云（UpYun）文件管理 Modified by <a href="https://blog.sspirits.top">SSpirits</a>
+ * 又拍云（UpYun）文件管理 Modified by <a href="https://blog.lv5.moe/">SSpirits</a>&<a href="https://ffis.me/">noisky</a>&<a href="https://blog.tominysun.com/">Tominysun</a>
  *
  * @package UpyunFile
  * @author codesee
  * @version 1.0.5
- * @link https://blog.sspirits.top
+ * @link https://blog.tominysun.com/
  * @since 1.2.0
  * @date 2021-09-14
  */
@@ -64,13 +64,17 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
 
         $upyunpathmode = new Typecho_Widget_Helper_Form_Element_Radio(
             'mode',
-            array('typecho' => _t('Typecho结构(' . self::getUploadDir() . '/年/月/文件名)'), 'simple' => _t('精简结构(/年/月/文件名)')),
+            array('typecho' => _t('默认结构(' . self::getUploadDir(Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile')->upyuncustompath) .Typecho_Request::getInstance()->get("upyuncustompath"). '/年/月/文件名)'), 'simple' => _t('精简结构(/年/月/文件名)')),
             'typecho',
             _t('目录结构模式'),
-            _t('默认为 Typecho 结构模式')
+            //_t('默认为 Typecho 结构模式')
         );
 
         $form->addInput($upyunpathmode);
+
+        $upyuncustompath = new Typecho_Widget_Helper_Form_Element_Text('upyuncustompath', NULL, NULL, _t('自定义目录：'));
+        $upyuncustompath->input->setAttribute('class', 'mini');
+        $form->addInput($upyuncustompath);
 
         $upyunhost = new Typecho_Widget_Helper_Form_Element_Text('upyunhost', NULL, NULL, _t('服务名称：'));
         $upyunhost->input->setAttribute('class', 'mini');
@@ -144,7 +148,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
         $settings = $options->plugin('UpyunFile');
         $thumbId = '';
         if ($settings->mode === 'typecho') {
-            $path = self::getUploadDir() . $path;
+            $path = self::getUploadDir($settings->upyuncustompath) . $path;
         }
 
         $nothumb = strpos($file['name'], '_nothumb') !== false;
@@ -371,9 +375,12 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
      * @access private
      * @return string
      */
-    private static function getUploadDir() {
+    private static function getUploadDir($path) {
         if (defined('__TYPECHO_UPLOAD_DIR__')) {
             return __TYPECHO_UPLOAD_DIR__;
+        }
+        if (!empty($path)) {
+            return $path;
         }
         return self::UPLOAD_DIR;
     }
@@ -749,7 +756,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
                     foreach ($matches[1] as $val) {
                         if (strpos($val, rtrim($options->siteUrl, '/')) !== false) {
                             if ($settings->mode === 'typecho') {
-                                $text = str_replace(rtrim($options->siteUrl, '/') . '/usr/uploads', $settings->upyundomain . self::getUploadDir(), $text);
+                                $text = str_replace(rtrim($options->siteUrl, '/') . '/usr/uploads', $settings->upyundomain . self::getUploadDir($settings->upyuncustompath), $text);
                             } else {
                                 $text = str_replace(rtrim($options->siteUrl, '/') . '/usr/uploads', $settings->upyundomain, $text);
                             }
