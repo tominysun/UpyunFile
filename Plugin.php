@@ -182,7 +182,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
         } else {
             $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
         }
-        @fclose($fh);
+        //@fclose($fh);又拍云上传后自动关闭文件流
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
@@ -249,7 +249,7 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
         } else {
             $upyun->write($path, $fh, array('x-gmkerl-thumb' => $settings->thumbId));
         }
-        @fclose($fh);
+        //@fclose($fh);又拍云上传后自动关闭文件流
 
         if (!isset($file['size'])) {
             $fileInfo = $upyun->info($path);
