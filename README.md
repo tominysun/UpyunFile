@@ -5,7 +5,7 @@ UpyunFile
 
 #### 插件简介：
 
- 本插件基于 [codesee/UpyunFile](https://github.com/codesee/UpyunFile) 二次开发，解决了原作的一些 bug，并加入了新功能。
+ 本插件基于 [noisky/UpyunFile](https://github.com/noisky/UpyunFile) 二次开发，解决了原作的一些 bug，并加入了新功能。
    
 #### 插件功能：
 
@@ -25,6 +25,18 @@ UpyunFile
 
 
 #### 更新记录：
+
+**2023-01-28：** 
+
+- 添加新功能：上传到又拍云同时保留本地副本
+
+**2023-01-27：** 
+
+- 可在插件设置页面填写自定义目录
+
+**2021-09-14：** 
+
+- 适配Typecho 1.2.0
 
 **2019-1-20：** 
 
