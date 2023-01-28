@@ -403,13 +403,6 @@ class UpyunFile_Plugin implements Typecho_Plugin_Interface {
      * @return string
      */
     public static function getUploadDir() {
-        /*if (defined('__TYPECHO_UPLOAD_DIR__')) {
-            return __TYPECHO_UPLOAD_DIR__;
-        }
-        if (!empty($path)) {
-            return $path;
-        }
-        return self::UPLOAD_DIR;*/
         $path = Typecho_Widget::widget('Widget_Options')->plugin('UpyunFile')->upyuncustompath;
         return defined('__TYPECHO_UPLOAD_DIR__') ? __TYPECHO_UPLOAD_DIR__ : ( !empty($path) ? $path : self::UPLOAD_DIR);
     }
