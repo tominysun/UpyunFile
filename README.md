@@ -15,7 +15,7 @@ UpyunFile
   4. 接入又拍云图片处理
   5. 为博客静态资源加入 Token 防盗链
   
-  ![截图](./screenshot.jpg)
+  ![截图](./screenshot.png)
 
 #### 使用方法：
 
